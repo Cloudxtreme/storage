@@ -11,7 +11,8 @@
 |
 */
 
-Route::get('/', function()
-{
-	return View::make('hello');
-});
+Route::group (array ('prefix' => '/v1'),
+	function () {
+		Route::resource('files', 'FileController');
+	}
+);
