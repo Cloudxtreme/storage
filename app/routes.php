@@ -16,3 +16,9 @@ Route::group (array ('prefix' => '/v1'),
 		Route::resource('files', 'FileController');
 	}
 );
+
+Route::group (array ('prefix' => '1'),
+	function () {
+		Route::resource('upload', 'UploadController');
+	}
+);
