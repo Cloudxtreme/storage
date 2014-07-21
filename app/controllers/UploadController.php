@@ -4,27 +4,11 @@ class UploadController extends \BaseController {
 
 	public function index()
 	{
-		$file = 'Test';
-	
-	
-		return Response::json (array (
-				'error' => false,
-				'files' => $file
-		), 200);
-	
-		/*
-			$file = new UploadedFile ();
-		$file->path = 'public/';
-		$file->filename = time ();
-	
-		$file->save ();
+		$file = 'Testing...';
 	
 		return Response::json (array (
-				'error' => false,
-				'files' => $file->toArray ()
+			'test' => $file
 		), 200);
-	
-		*/
 	
 	}
 	
@@ -38,47 +22,24 @@ class UploadController extends \BaseController {
 	{
 		$path_upload_local = '/tmp_images/';
 		$path_upload_remote = '/';
-		
-		
-		/*
-		$method = Request::method();
-		
-		if (Request::isMethod('post'))
-		{
-			return 'Is a POST'; 
-		}*/
-		
-		
-		//$data = Input::json();
-		
-		//$file = $data->data;
-		
-		//$data = Input::get('data');
-		//$data = Input::get('data');
-		
-		//$file = json_decode($data);
-		
-		//$file = Input::json();
-		
-		//$file = Input::get('data');
-		//$file = Input::put('data');
-		
+
+		// Get file
 		$request = Input::json()->all();
 		
-		//var_dump($file->data);
-		//var_dump($request['data']);
-
 		$data = isset($request['data']) ? $request['data'] : '';
 		
+		if (!$data) {
+			return Response::json (array (
+				'error' => true,
+				'message' => 'Image not sent properly!'
+			), 200);
+		}
 		
-		
-		list($type, $data)   = explode(';', $data);
-		list($format, $data) = explode(',', $data);
+		list($type, $data)   = explode(';', $data); // {'image/png', 'image/jpeg'}
+		list($format, $data) = explode(',', $data); // base64
 		$data = base64_decode($data);
 		
-		//var_dump($type,$format);
-		
-		$type = str_ireplace('data:','',strtolower($type));
+		$type = str_ireplace('data:','',strtolower($type)); 
 		
 		if ($format != 'base64') {
 			return Response::json (array (
@@ -87,55 +48,88 @@ class UploadController extends \BaseController {
 			), 200);
 		}
 		
-		switch($type) {
-		case 'image/png':
-		case 'image/jpeg':
-			// Good mime formats
-		break;
-		default:
+		
+		//$file_generated = CDNURL::generateFilenameByType($type);
+		$file_generated = CDNURL::generateFilename ($type);
+		
+		// Check for a valid file type
+		/*
+		if ($file_generated['extension'] == '') {
 			return Response::json (array (
 				'error' => true,
 				'message' => 'Image sent in wrong MIME format!'
 			), 200);
 		}
+		*/
 		
-		$filename = md5(uniqid()) .'.png';
+		//echo "<pre>"; var_dump($file_generated); die('...');
 		
-		file_put_contents($path_upload_local . '/'. $filename, $data);
+		$filename_local = $file_generated['local'];
 		
-		echo "type: $type";
+		// Create MD5 folders recursively
+		$dir_local = dirname($filename_local);
 		
+		if (!file_exists($dir_local)) {
+			mkdir($dir_local, 0777, true);
+		}
 		
-		/*
-		if (Request::format() == 'json')
+		// Write file to disk
+		try
 		{
+			// Save temporary file, unknown file type
+			file_put_contents($filename_local, $data);
 			
-			return Response::json (array (
-				'error' => false,
-				'files' => 'Image sent'
-			), 200);
+			// Get EXIF properties
+			$ext = CDNURL::getImageType($filename_local);
 			
-		} else {
+			// Check if we have a valid image and rename to a valid file type {'image/png', 'image/jpeg'}
+			if ($ext) {
+				$new_filename_local = substr($filename_local, 0, -3) . $ext;
+				
+				// Update remote file the proper extension
+				$file_generated['remote'] = substr($file_generated['remote'], 0, -3) . $ext;
+				
+				//die("filename_local = $filename_local # new_filename_local = $new_filename_local");
+				
+				// Rename file with the proper extension
+				@rename($filename_local, $new_filename_local);
+				
+				// Update filenames with the proper extension
+				$filename_local = $new_filename_local;
+			} else {
+				// Delete useless temporary files
+				@unlink($filename_local);
+			}
+			
+			
+			
+		} catch (\Exception $e) {
+			// Suppress errors
+		}
+		
+		// Check if the file was written properly
+		if (filesize($filename_local) !== strlen($data)) {
 			return Response::json (array (
 				'error' => true,
-				'message' => 'Image not sent in the proper format!'
+				'message' => 'File not saved properly!'
 			), 200);
 		}
-		*/
 		
-		/*
-		$file = new UploadedFile ();
-		$file->path = 'public/';
-		$file->filename = time ();
-
-		$file->save ();
-
-		return Response::json (array (
-				'error' => false,
-				'files' => $file->toArray ()
-		), 200);
+		if (!is_readable($filename_local)) {
+			return Response::json (array (
+				'error' => true,
+				'message' => 'File saved but it\'s not readable!'
+			), 200);
+		}
 		
-		*/
+		// --------------------------------------------------------------------
+		// Resize image to the default stream size
+		// --------------------------------------------------------------------
+		
+		// --------------------------------------------------------------------
+		// Return image generated
+		// --------------------------------------------------------------------
+		return $file_generated['remote'];
 		
 	}
 
