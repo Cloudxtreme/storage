@@ -73,6 +73,22 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	}
 
 	/**
+	 * Determine if an item exists in the collection.
+	 *
+	 * @param  mixed  $value
+	 * @return bool
+	 */
+	public function contains($value)
+	{
+		if ($value instanceof Closure)
+		{
+			return ! is_null($this->first($value));
+		}
+
+		return in_array($value, $this->items);
+	}
+
+	/**
 	 * Diff the collection with the given items.
 	 *
 	 * @param  \Illuminate\Support\Collection|\Illuminate\Support\Contracts\ArrayableInterface|array  $items
@@ -86,7 +102,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Execute a callback over each item.
 	 *
-	 * @param  Closure  $callback
+	 * @param  \Closure  $callback
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function each(Closure $callback)
@@ -110,7 +126,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Run a filter over each of the items.
 	 *
-	 * @param  Closure  $callback
+	 * @param  \Closure  $callback
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function filter(Closure $callback)
@@ -140,11 +156,21 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Get a flattened array of the items in the collection.
 	 *
-	 * @return array
+	 * @return \Illuminate\Support\Collection
 	 */
 	public function flatten()
 	{
 		return new static(array_flatten($this->items));
+	}
+
+	/**
+	 * Flip the items in the collection.
+	 *
+	 * @return \Illuminate\Support\Collection
+	 */
+	public function flip()
+	{
+		return new static(array_flip($this->items));
 	}
 
 	/**
@@ -190,6 +216,26 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 			$key = is_callable($groupBy) ? $groupBy($value, $key) : data_get($value, $groupBy);
 
 			$results[$key][] = $value;
+		}
+
+		return new static($results);
+	}
+
+	/**
+	 * Key an associative array by a field.
+	 *
+	 * @param  string  $keyBy
+	 * @return \Illuminate\Support\Collection
+	 */
+	public function keyBy($keyBy)
+	{
+		$results = [];
+
+		foreach ($this->items as $item)
+		{
+			$key = data_get($item, $keyBy);
+
+			$results[$key] = $item;
 		}
 
 		return new static($results);
@@ -242,6 +288,16 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	}
 
 	/**
+	 * Get the keys of the collection items.
+	 *
+	 * @return array
+	 */
+	public function keys()
+	{
+		return array_keys($this->items);
+	}
+
+	/**
 	* Get the last item from the collection.
 	*
 	* @return mixed|null
@@ -266,7 +322,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Run a map over each of the items.
 	 *
-	 * @param  Closure  $callback
+	 * @param  \Closure  $callback
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function map(Closure $callback)
@@ -342,21 +398,9 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	}
 
 	/**
-	 * Reduce the collection to a single value.
-	 *
-	 * @param  callable  $callback
-	 * @param  mixed  $initial
-	 * @return mixed
-	 */
-	public function reduce($callback, $initial = null)
-	{
-		return array_reduce($this->items, $callback, $initial);
-	}
-
-	/**
 	 * Get one or more items randomly from the collection.
 	 *
-	 * @param  int $amount
+	 * @param  int  $amount
 	 * @return mixed
 	 */
 	public function random($amount = 1)
@@ -364,6 +408,46 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 		$keys = array_rand($this->items, $amount);
 
 		return is_array($keys) ? array_intersect_key($this->items, array_flip($keys)) : $this->items[$keys];
+	}
+
+	/**
+	 * Reduce the collection to a single value.
+	 *
+	 * @param  callable  $callback
+	 * @param  mixed     $initial
+	 * @return mixed
+	 */
+	public function reduce(callable $callback, $initial = null)
+	{
+		return array_reduce($this->items, $callback, $initial);
+	}
+
+	/**
+	 * Create a colleciton of all elements that do not pass a given truth test.
+	 *
+	 * @param  \Closure|mixed  $callback
+	 * @return \Illuminate\Support\Collection
+	 */
+	public function reject($callback)
+	{
+		$results = [];
+
+		foreach ($this->items as $key => $value)
+		{
+			if ($callback instanceof Closure)
+			{
+				if ( ! $callback($value))
+				{
+					$results[$key] = $value;
+				}
+			}
+			elseif ($callback != $value)
+			{
+				$results[$key] = $value;
+			}
+		}
+
+		return new static($results);
 	}
 
 	/**
@@ -399,6 +483,18 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	}
 
 	/**
+	 * Shuffle the items in the collection.
+	 *
+	 * @return \Illuminate\Support\Collection
+	 */
+	public function shuffle()
+	{
+		shuffle($this->items);
+
+		return $this;
+	}
+
+	/**
 	 * Slice the underlying collection array.
 	 *
 	 * @param  int   $offset
@@ -414,7 +510,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Chunk the underlying collection array.
 	 *
-	 * @param  int $size
+	 * @param  int   $size
 	 * @param  bool  $preserveKeys
 	 * @return \Illuminate\Support\Collection
 	 */
@@ -433,7 +529,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Sort through each item with a callback.
 	 *
-	 * @param  Closure  $callback
+	 * @param  \Closure  $callback
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function sort(Closure $callback)
@@ -447,8 +543,8 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	 * Sort the collection using the given Closure.
 	 *
 	 * @param  \Closure|string  $callback
-	 * @param  int              $options
-	 * @param  bool             $descending
+	 * @param  int   $options
+	 * @param  bool  $descending
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function sortBy($callback, $options = SORT_REGULAR, $descending = false)
@@ -486,7 +582,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	 * Sort the collection in descending order using the given Closure.
 	 *
 	 * @param  \Closure|string  $callback
-	 * @param  int              $options
+	 * @param  int  $options
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function sortByDesc($callback, $options = SORT_REGULAR)
@@ -511,7 +607,6 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	 * Get the sum of the given values.
 	 *
 	 * @param  \Closure  $callback
-	 * @param  string  $callback
 	 * @return mixed
 	 */
 	public function sum($callback)
@@ -544,7 +639,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Transform each item in the collection using a callback.
 	 *
-	 * @param  Closure  $callback
+	 * @param  \Closure  $callback
 	 * @return \Illuminate\Support\Collection
 	 */
 	public function transform(Closure $callback)
@@ -638,6 +733,7 @@ class Collection implements ArrayAccess, ArrayableInterface, Countable, Iterator
 	/**
 	 * Get a CachingIterator instance.
 	 *
+	 * @param  int  $flags
 	 * @return \CachingIterator
 	 */
 	public function getCachingIterator($flags = CachingIterator::CALL_TOSTRING)
