@@ -63,11 +63,10 @@ class RouteCollection implements Countable, IteratorAggregate {
 	{
 		foreach ($route->methods() as $method)
 		{
-			$domainAndUri = $route->domain().$route->getUri();
-			$this->routes[$method][$domainAndUri] = $route;
+			$this->routes[$method][$route->domain().$route->getUri()] = $route;
 		}
 
-		$this->allRoutes[$method.$domainAndUri] = $route;
+		$this->allRoutes[$method.$route->domain().$route->getUri()] = $route;
 	}
 
 	/**
@@ -186,7 +185,7 @@ class RouteCollection implements Countable, IteratorAggregate {
 	{
 		if ($request->method() == 'OPTIONS')
 		{
-			return (new Route('OPTIONS', $request->path(), function() use ($others)
+			return with(new Route('OPTIONS', $request->path(), function() use ($others)
 			{
 				return new Response('', 200, array('Allow' => implode(',', $others)));
 

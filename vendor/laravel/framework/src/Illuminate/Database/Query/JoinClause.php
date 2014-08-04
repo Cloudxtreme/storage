@@ -59,7 +59,7 @@ class JoinClause {
 	{
 		$this->clauses[] = compact('first', 'operator', 'second', 'boolean', 'where');
 
-		if ($where) $this->query->addBinding($second, 'join');
+		if ($where) $this->query->addBinding($second);
 
 		return $this;
 	}
@@ -97,6 +97,7 @@ class JoinClause {
 	 * @param  string  $first
 	 * @param  string  $operator
 	 * @param  string  $second
+	 * @param  string  $boolean
 	 * @return \Illuminate\Database\Query\JoinClause
 	 */
 	public function orWhere($first, $operator, $second)

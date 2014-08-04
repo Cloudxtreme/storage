@@ -64,14 +64,12 @@ class Dispatcher {
 		{
 			if (str_contains($event, '*'))
 			{
-				$this->setupWildcardListen($event, $listener);
+				return $this->setupWildcardListen($event, $listener);
 			}
-			else
-			{
-				$this->listeners[$event][$priority][] = $this->makeListener($listener);
 
-				unset($this->sorted[$event]);
-			}
+			$this->listeners[$event][$priority][] = $this->makeListener($listener);
+
+			unset($this->sorted[$event]);
 		}
 	}
 
@@ -107,9 +105,11 @@ class Dispatcher {
 	 */
 	public function queue($event, $payload = array())
 	{
-		$this->listen($event.'_queue', function() use ($event, $payload)
+		$me = $this;
+
+		$this->listen($event.'_queue', function() use ($me, $event, $payload)
 		{
-			$this->fire($event, $payload);
+			$me->fire($event, $payload);
 		});
 	}
 

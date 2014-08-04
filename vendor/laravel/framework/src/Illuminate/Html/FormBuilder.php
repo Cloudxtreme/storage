@@ -2,11 +2,8 @@
 
 use Illuminate\Routing\UrlGenerator;
 use Illuminate\Session\Store as Session;
-use Illuminate\Support\Traits\MacroableTrait;
 
 class FormBuilder {
-
-	use MacroableTrait;
 
 	/**
 	 * The HTML builder instance.
@@ -49,6 +46,13 @@ class FormBuilder {
 	 * @var array
 	 */
 	protected $labels = array();
+
+	/**
+	 * The registered form builder macros.
+	 *
+	 * @var array
+	 */
+	protected $macros = array();
 
 	/**
 	 * The reserved form open attributes.
@@ -719,12 +723,24 @@ class FormBuilder {
 	 */
 	public function button($value = null, $options = array())
 	{
-		if ( ! array_key_exists('type', $options))
+		if ( ! array_key_exists('type', $options) )
 		{
 			$options['type'] = 'button';
 		}
 
 		return '<button'.$this->html->attributes($options).'>'.$value.'</button>';
+	}
+
+	/**
+	 * Register a custom form macro.
+	 *
+	 * @param  string    $name
+	 * @param  callable  $macro
+	 * @return void
+	 */
+	public function macro($name, $macro)
+	{
+		$this->macros[$name] = $macro;
 	}
 
 	/**
@@ -967,6 +983,25 @@ class FormBuilder {
 		$this->session = $session;
 
 		return $this;
+	}
+
+	/**
+	 * Dynamically handle calls to the form builder.
+	 *
+	 * @param  string  $method
+	 * @param  array   $parameters
+	 * @return mixed
+	 *
+	 * @throws \BadMethodCallException
+	 */
+	public function __call($method, $parameters)
+	{
+		if (isset($this->macros[$method]))
+		{
+			return call_user_func_array($this->macros[$method], $parameters);
+		}
+
+		throw new \BadMethodCallException("Method {$method} does not exist.");
 	}
 
 }

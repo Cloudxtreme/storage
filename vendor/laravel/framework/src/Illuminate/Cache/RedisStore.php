@@ -66,7 +66,9 @@ class RedisStore extends TaggableStore implements StoreInterface {
 	{
 		$value = is_numeric($value) ? $value : serialize($value);
 
-		$this->connection()->setex($this->prefix.$key, $minutes * 60, $value);
+		$this->connection()->set($this->prefix.$key, $value);
+
+		$this->connection()->expire($this->prefix.$key, $minutes * 60);
 	}
 
 	/**
@@ -142,7 +144,7 @@ class RedisStore extends TaggableStore implements StoreInterface {
 	/**
 	 * Get the Redis connection instance.
 	 *
-	 * @return \Predis\ClientInterface
+	 * @return \Predis\Connection\SingleConnectionInterface
 	 */
 	public function connection()
 	{
