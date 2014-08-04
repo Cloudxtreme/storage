@@ -1,0 +1,1 @@
+php artisan routes > x_routes.txt

@@ -2,9 +2,14 @@
 
 class UploadController extends \BaseController {
 
+    /**
+     * Default index page
+     *
+     * @return Response
+     */
 	public function index()
 	{
-		$file = 'Testing...';
+		$file = 'Upload page!';
 	
 		return Response::json (array (
 			'test' => $file
@@ -20,9 +25,6 @@ class UploadController extends \BaseController {
 	 */
 	public function store ()
 	{
-		$path_upload_local = '/tmp_images/';
-		$path_upload_remote = '/';
-
 		// Get file
 		$request = Input::json()->all();
 		
@@ -49,7 +51,6 @@ class UploadController extends \BaseController {
 		}
 		
 		
-		//$file_generated = CDNURL::generateFilenameByType($type);
 		$file_generated = CDNURL::generateFilename ($type);
 		
 		// Check for a valid file type
@@ -102,7 +103,6 @@ class UploadController extends \BaseController {
 			}
 			
 			
-			
 		} catch (\Exception $e) {
 			// Suppress errors
 		}
@@ -133,5 +133,68 @@ class UploadController extends \BaseController {
 		
 	}
 
+    /**
+     * Show
+     *
+     * @return Response
+     */
+    public function show ()
+    {
+
+    }
+
+    /*
+     * Alows to test the upload endpoint
+     * cloudwalkers-storage.local/1/upload/upload-test
+     *
+     * If we want to test another upload endpoint:
+     * cloudwalkers-storage.local/1/upload/upload-test?url=http://devstorage.cloudwalkers.be/1/upload
+     *
+     * */
+
+    public function testUpload() {
+        $url_test = isset($_GET['url']) ? $_GET['url'] : "http://cloudwalkers-storage.local/1/upload";
+
+        /*
+        $postdata = http_build_query(
+            array(
+                'var1' => 'some content',
+                'var2' => 'test'
+            )
+        );
+        */
+
+        $str_file = '{ "data" : "data:image/png;base64,';
+        $str_file .= base64_encode(file_get_contents('images/test_image.png', LOCK_EX));
+        $str_file .= ' "}';
+
+        $postdata = http_build_query(
+            array(''=>$str_file)
+        );
+
+        $postdata = $str_file;
+
+        $opts = array('http' =>
+            array(
+                'method'  => 'POST',
+                'header'  => 'Content-type: application/x-www-form-urlencoded',
+                'content' => $postdata
+            )
+        );
+
+        $context  = stream_context_create($opts);
+
+        $result = file_get_contents($url_test, false, $context);
+
+        return Response::json (array (
+            'url' => $url_test,
+            'test' => $result
+        ), 200);
+    }
+
+    public function missingMethod($parameters = array())
+    {
+        //
+    }
 
 }

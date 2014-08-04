@@ -17,8 +17,11 @@ Route::group (array ('prefix' => '/v1'),
 	}
 );
 
-Route::group (array ('prefix' => '1'),
-	function () {
-		Route::resource('upload', 'UploadController');
-	}
-);
+Route::group (array ('prefix' => '1'), function () {
+
+    // [GET] :: /1/upload/upload-test
+    Route::get('upload/upload-test', 'UploadController@testUpload');
+
+    Route::resource('upload', 'UploadController');
+
+});

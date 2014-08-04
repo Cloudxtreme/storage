@@ -1,0 +1,20 @@
++--------+---------------------------------+------------------+--------------------------+----------------+---------------+
+| Domain | URI                             | Name             | Action                   | Before Filters | After Filters |
++--------+---------------------------------+------------------+--------------------------+----------------+---------------+
+|        | GET|HEAD v1/files               | v1.files.index   | FileController@index     |                |               |
+|        | GET|HEAD v1/files/create        | v1.files.create  | FileController@create    |                |               |
+|        | POST v1/files                   | v1.files.store   | FileController@store     |                |               |
+|        | GET|HEAD v1/files/{files}       | v1.files.show    | FileController@show      |                |               |
+|        | GET|HEAD v1/files/{files}/edit  | v1.files.edit    | FileController@edit      |                |               |
+|        | PUT v1/files/{files}            | v1.files.update  | FileController@update    |                |               |
+|        | PATCH v1/files/{files}          |                  | FileController@update    |                |               |
+|        | DELETE v1/files/{files}         | v1.files.destroy | FileController@destroy   |                |               |
+|        | GET|HEAD 1/upload               | 1.upload.index   | UploadController@index   |                |               |
+|        | GET|HEAD 1/upload/create        | 1.upload.create  | UploadController@create  |                |               |
+|        | POST 1/upload                   | 1.upload.store   | UploadController@store   |                |               |
+|        | GET|HEAD 1/upload/{upload}      | 1.upload.show    | UploadController@show    |                |               |
+|        | GET|HEAD 1/upload/{upload}/edit | 1.upload.edit    | UploadController@edit    |                |               |
+|        | PUT 1/upload/{upload}           | 1.upload.update  | UploadController@update  |                |               |
+|        | PATCH 1/upload/{upload}         |                  | UploadController@update  |                |               |
+|        | DELETE 1/upload/{upload}        | 1.upload.destroy | UploadController@destroy |                |               |
++--------+---------------------------------+------------------+--------------------------+----------------+---------------+
